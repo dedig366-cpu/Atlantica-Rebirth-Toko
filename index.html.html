@@ -1,0 +1,465 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Daftar Barang Jualan</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container { max-width: 1200px; margin: 0 auto; }
+
+        .header {
+            background: white;
+            padding: 25px;
+            border-radius: 15px;
+            margin-bottom: 20px;
+            text-align: center;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.2);
+        }
+
+        h1 { color: #667eea; margin-bottom: 10px; font-size: 28px; }
+        .contact { color: #666; font-size: 18px; }
+        .contact a { color: #667eea; font-weight: bold; text-decoration: none; }
+
+        .setup-banner {
+            background: #fff3cd;
+            border: 2px solid #ffc107;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .setup-banner input {
+            width: 100%;
+            max-width: 600px;
+            padding: 12px;
+            border: 2px solid #ffc107;
+            border-radius: 8px;
+            font-size: 14px;
+            margin: 10px auto;
+            display: block;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 20px;
+        }
+
+        .card {
+            background: white;
+            border-radius: 15px;
+            overflow: hidden;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            position: relative;
+            transition: transform 0.3s;
+        }
+        .card:hover { transform: translateY(-5px); }
+        .card img { width: 100%; height: 200px; object-fit: cover; }
+
+        .no-image {
+            width: 100%; height: 200px;
+            background: #f0f0f0;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 70px;
+        }
+
+        .card-body { padding: 15px; }
+        .card-title { font-size: 18px; font-weight: bold; color: #333; margin-bottom: 8px; }
+        .card-price { font-size: 22px; color: #667eea; font-weight: bold; margin-bottom: 8px; }
+        .card-note { color: #666; font-size: 14px; }
+
+        .delete-btn {
+            position: absolute; top: 10px; right: 10px;
+            background: #dc3545; color: white;
+            border: none; width: 35px; height: 35px;
+            border-radius: 50%; cursor: pointer; font-size: 20px;
+            display: none;
+        }
+        .delete-btn.show { display: block; }
+
+        .btn-fixed {
+            position: fixed; bottom: 30px; right: 30px;
+            z-index: 100; display: flex; flex-direction: column;
+            align-items: flex-end; gap: 10px;
+        }
+
+        .btn {
+            background: #667eea; color: white; border: none;
+            padding: 14px 24px; border-radius: 25px; cursor: pointer;
+            font-size: 15px; font-weight: bold;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+        }
+        .btn:hover { background: #5568d3; }
+        .btn-red { background: #dc3545; }
+        .btn-red:hover { background: #c82333; }
+        .btn-gray { background: #6c757d; }
+
+        .modal {
+            display: none; position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.7);
+            justify-content: center; align-items: center;
+            z-index: 1000; padding: 20px;
+        }
+        .modal.show { display: flex; }
+
+        .modal-box {
+            background: white; padding: 30px; border-radius: 15px;
+            width: 100%; max-width: 480px; max-height: 90vh; overflow-y: auto;
+        }
+        .modal-box h2 { color: #667eea; margin-bottom: 20px; }
+
+        .form-group { margin-bottom: 15px; }
+        label { display: block; margin-bottom: 5px; font-weight: bold; color: #333; }
+
+        input[type=text], input[type=number], input[type=password], textarea {
+            width: 100%; padding: 12px;
+            border: 2px solid #e0e0e0; border-radius: 8px;
+            font-size: 14px; font-family: inherit;
+        }
+        input:focus, textarea:focus { outline: none; border-color: #667eea; }
+        textarea { resize: vertical; min-height: 80px; }
+
+        input[type=file] {
+            width: 100%; padding: 10px;
+            border: 2px dashed #667eea; border-radius: 8px;
+            cursor: pointer; background: #f8f8ff;
+        }
+
+        #preview {
+            display: none; width: 100%; max-height: 200px;
+            object-fit: cover; border-radius: 8px; margin-top: 10px;
+        }
+
+        small { color: #888; font-size: 12px; }
+
+        .empty {
+            text-align: center; padding: 60px 20px;
+            background: white; border-radius: 15px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+        .empty h2 { color: #667eea; margin-bottom: 10px; }
+        .loading { text-align: center; padding: 40px; color: white; font-size: 18px; }
+
+        @media (max-width: 768px) {
+            .grid { grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); }
+            .card img, .no-image { height: 160px; }
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <div class="header">
+        <h1>🛍️ Daftar Barang Jualan</h1>
+        <div class="contact">📞 Hubungi: <a href="#" id="contactLink">-</a></div>
+    </div>
+
+    <div class="setup-banner" id="setupBanner">
+        ⚠️ <strong>Masukkan URL Google Apps Script kamu!</strong><br><br>
+        <input type="text" id="scriptUrlInput" placeholder="https://script.google.com/macros/s/.../exec">
+        <button class="btn" onclick="saveScriptUrl()">Simpan URL</button>
+    </div>
+
+    <div id="productList" class="loading">⏳ Memuat data...</div>
+</div>
+
+<div class="btn-fixed">
+    <button class="btn" id="loginBtn" onclick="showLogin()">🔐 Login</button>
+    <button class="btn" id="addBtn" style="display:none;" onclick="showAdd()">+ Tambah</button>
+    <button class="btn btn-red" id="logoutBtn" style="display:none;" onclick="logout()">Logout</button>
+</div>
+
+<!-- Modal Login -->
+<div id="loginModal" class="modal">
+    <div class="modal-box">
+        <h2>🔐 Login Pemilik</h2>
+        <div class="form-group">
+            <label>Password:</label>
+            <input type="password" id="passInput" placeholder="Masukkan password">
+            <small>Password pertama yang kamu buat akan jadi password tetap</small>
+        </div>
+        <button class="btn" onclick="doLogin()">Login</button>
+        <button class="btn btn-gray" style="margin-top:10px;" onclick="closeModal()">Batal</button>
+    </div>
+</div>
+
+<!-- Modal Tambah -->
+<div id="addModal" class="modal">
+    <div class="modal-box">
+        <h2>+ Tambah Barang</h2>
+        <div class="form-group">
+            <label>Nama Barang *</label>
+            <input type="text" id="itemName">
+        </div>
+        <div class="form-group">
+            <label>Harga (Rp) *</label>
+            <input type="number" id="itemPrice">
+        </div>
+        <div class="form-group">
+            <label>Foto Barang</label>
+            <input type="file" id="imageFile" accept="image/*" onchange="previewImg(this)">
+            <img id="preview" alt="Preview">
+            <small>Upload foto dari PC (opsional)</small>
+        </div>
+        <div class="form-group">
+            <label>Catatan</label>
+            <textarea id="itemNote" placeholder="Kondisi, ukuran, warna, dll"></textarea>
+        </div>
+        <div class="form-group" id="contactGroup">
+            <label>Nomor WhatsApp *</label>
+            <input type="text" id="contactInput" placeholder="08123456789">
+            <small>Cuma isi sekali</small>
+        </div>
+        <button class="btn" onclick="saveItem()">💾 Simpan</button>
+        <button class="btn btn-gray" style="margin-top:10px;" onclick="closeModal()">Batal</button>
+    </div>
+</div>
+
+<script>
+    let loggedIn = false;
+    let SCRIPT_URL = localStorage.getItem('script_url') || '';
+    let contact = '';
+
+    // =====================
+    // SETUP URL
+    // =====================
+    function saveScriptUrl() {
+        const url = document.getElementById('scriptUrlInput').value.trim();
+        if (!url || !url.includes('script.google.com')) {
+            alert('URL tidak valid!');
+            return;
+        }
+        localStorage.setItem('script_url', url);
+        SCRIPT_URL = url;
+        document.getElementById('setupBanner').style.display = 'none';
+        loadAll();
+    }
+
+    // =====================
+    // LOGIN — pakai localStorage, tidak butuh internet
+    // =====================
+    function showLogin() {
+        document.getElementById('passInput').value = '';
+        document.getElementById('loginModal').classList.add('show');
+    }
+
+    function doLogin() {
+        const pass = document.getElementById('passInput').value.trim();
+        if (!pass) {
+            alert('Masukkan password!');
+            return;
+        }
+
+        const saved = localStorage.getItem('owner_pass');
+
+        if (!saved) {
+            localStorage.setItem('owner_pass', pass);
+            loggedIn = true;
+            closeModal();
+            updateUI();
+            alert('✅ Password berhasil dibuat! Catat passwordmu ya.');
+        } else if (pass === saved) {
+            loggedIn = true;
+            closeModal();
+            updateUI();
+        } else {
+            alert('❌ Password salah!');
+        }
+    }
+
+    function logout() {
+        loggedIn = false;
+        updateUI();
+    }
+
+    function updateUI() {
+        document.getElementById('loginBtn').style.display  = loggedIn ? 'none'  : 'block';
+        document.getElementById('addBtn').style.display    = loggedIn ? 'block' : 'none';
+        document.getElementById('logoutBtn').style.display = loggedIn ? 'block' : 'none';
+        loadAll();
+    }
+
+    // =====================
+    // API GOOGLE SHEETS
+    // =====================
+    async function apiGet(params) {
+        const url = SCRIPT_URL + '?' + new URLSearchParams(params);
+        const res = await fetch(url);
+        return res.json();
+    }
+
+    async function apiPost(body) {
+        const res = await fetch(SCRIPT_URL, {
+            method: 'POST',
+            body: JSON.stringify(body)
+        });
+        return res.json();
+    }
+
+    // =====================
+    // LOAD BARANG
+    // =====================
+    async function loadAll() {
+        if (!SCRIPT_URL) {
+            document.getElementById('productList').innerHTML =
+                '<div class="empty"><h2>Masukkan URL Apps Script dulu ☝️</h2></div>';
+            return;
+        }
+
+        document.getElementById('productList').innerHTML = '<div class="loading">⏳ Memuat barang...</div>';
+
+        try {
+            const contactData = await apiGet({ action: 'getContact' });
+            if (contactData && contactData.contact) {
+                contact = contactData.contact;
+                updateContactUI();
+            }
+
+            const itemData = await apiGet({ action: 'getItems' });
+            renderItems(itemData && itemData.items ? itemData.items : []);
+        } catch (e) {
+            document.getElementById('productList').innerHTML =
+                '<div class="empty"><h2>Gagal memuat data</h2><p>Cek URL Apps Script kamu</p></div>';
+        }
+    }
+
+    function renderItems(items) {
+        const list = document.getElementById('productList');
+        if (!items || items.length === 0) {
+            list.innerHTML = '<div class="empty"><h2>Belum Ada Barang</h2><p>Login lalu klik "+ Tambah"</p></div>';
+            return;
+        }
+
+        items.sort((a, b) => b.time - a.time);
+
+        list.innerHTML = `<div class="grid">${items.map(item => `
+            <div class="card">
+                <button class="delete-btn ${loggedIn ? 'show' : ''}" onclick="deleteItem(${item.id})">×</button>
+                ${item.image
+                    ? `<img src="${item.image}" onerror="this.outerHTML='<div class=no-image>📦</div>'">`
+                    : '<div class="no-image">📦</div>'}
+                <div class="card-body">
+                    <div class="card-title">${item.name}</div>
+                    <div class="card-price">Rp ${Number(item.price).toLocaleString('id-ID')}</div>
+                    ${item.note ? `<div class="card-note">${item.note}</div>` : ''}
+                </div>
+            </div>
+        `).join('')}</div>`;
+    }
+
+    function updateContactUI() {
+        const link = document.getElementById('contactLink');
+        link.textContent = contact;
+        link.href = `https://wa.me/${contact.replace(/\D/g, '')}`;
+    }
+
+    // =====================
+    // TAMBAH BARANG
+    // =====================
+    function showAdd() {
+        document.getElementById('addModal').classList.add('show');
+        if (contact) document.getElementById('contactGroup').style.display = 'none';
+    }
+
+    function previewImg(input) {
+        const preview = document.getElementById('preview');
+        if (input.files && input.files[0]) {
+            const reader = new FileReader();
+            reader.onload = e => { preview.src = e.target.result; preview.style.display = 'block'; };
+            reader.readAsDataURL(input.files[0]);
+        } else {
+            preview.style.display = 'none';
+        }
+    }
+
+    async function saveItem() {
+        const name  = document.getElementById('itemName').value.trim();
+        const price = document.getElementById('itemPrice').value.trim();
+        const note  = document.getElementById('itemNote').value.trim();
+        const file  = document.getElementById('imageFile').files[0];
+
+        if (!name || !price) { alert('Nama dan harga harus diisi!'); return; }
+
+        if (!contact) {
+            const c = document.getElementById('contactInput').value.trim();
+            if (!c) { alert('Nomor WhatsApp harus diisi!'); return; }
+            await apiPost({ action: 'setContact', contact: c });
+            contact = c;
+            updateContactUI();
+        }
+
+        let imageData = null;
+        if (file) {
+            imageData = await new Promise(resolve => {
+                const reader = new FileReader();
+                reader.onload = e => resolve(e.target.result);
+                reader.readAsDataURL(file);
+            });
+        }
+
+        try {
+            await apiPost({
+                action: 'addItem',
+                id: Date.now(),
+                name, price: parseInt(price),
+                note, image: imageData,
+                time: Date.now()
+            });
+
+            document.getElementById('itemName').value  = '';
+            document.getElementById('itemPrice').value = '';
+            document.getElementById('itemNote').value  = '';
+            document.getElementById('imageFile').value = '';
+            document.getElementById('preview').style.display = 'none';
+
+            closeModal();
+            loadAll();
+        } catch (e) {
+            alert('Gagal menyimpan. Cek koneksi internet.');
+        }
+    }
+
+    // =====================
+    // HAPUS BARANG
+    // =====================
+    async function deleteItem(id) {
+        if (!loggedIn) return;
+        if (!confirm('Hapus barang ini?')) return;
+        await apiPost({ action: 'deleteItem', id });
+        loadAll();
+    }
+
+    // =====================
+    // MODAL
+    // =====================
+    function closeModal() {
+        document.querySelectorAll('.modal').forEach(m => m.classList.remove('show'));
+    }
+
+    window.onclick = e => {
+        if (e.target.classList.contains('modal')) closeModal();
+    };
+
+    // =====================
+    // INIT
+    // =====================
+    if (SCRIPT_URL) {
+        document.getElementById('setupBanner').style.display = 'none';
+        loadAll();
+    } else {
+        document.getElementById('productList').innerHTML =
+            '<div class="empty"><h2>Masukkan URL Apps Script dulu ☝️</h2></div>';
+    }
+</script>
+</body>
+</html>
